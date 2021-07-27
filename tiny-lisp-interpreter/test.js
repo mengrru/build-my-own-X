@@ -1,4 +1,4 @@
-const interpret = require('./index')
+const interpret = require('./interpreter')
 const cases = require('./cases')
 
 const notPassMsg = []
