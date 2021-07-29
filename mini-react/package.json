@@ -1,0 +1,19 @@
+{
+  "name": "mini-react",
+  "version": "1.0.0",
+  "description": "- [Build your own React](https://pomb.us/build-your-own-react/)",
+  "main": "mini-react.js",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/cli": "^7.14.8",
+    "@babel/core": "^7.14.8",
+    "@babel/preset-env": "^7.14.8",
+    "@babel/preset-react": "^7.14.5"
+  },
+  "scripts": {
+    "build": "./node_modules/.bin/babel mini-react.js --out-dir build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
