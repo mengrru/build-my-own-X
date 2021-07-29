@@ -101,18 +101,33 @@ function commitWork(fiber) {
     return;
   }
 
-  const domParent = fiber.parent.dom;
+  let domParentFiber = fiber.parent;
+
+  while (!domParentFiber.dom) {
+    domParentFiber = domParentFiber.parent;
+  }
+
+  const domParent = domParentFiber.dom;
 
   if (fiber.effectTag === 'PLACEMENT' && fiber.dom) {
     domParent.appendChild(fiber.dom);
   } else if (fiber.effectTag === 'DELETION') {
-    domParent.removeChild(fiber.dom);
+    commitDeletion(fiber, domParent); // commitWork(fiber.sibling)
+    // return
   } else if (fiber.effectTag === 'UPDATE' && fiber.dom) {
     updateDom(fiber.dom, fiber.alternate.props, fiber.props);
   }
 
   commitWork(fiber.child);
   commitWork(fiber.sibling);
+}
+
+function commitDeletion(fiber, domParent) {
+  if (fiber.dom) {
+    domParent.removeChild(fiber.dom);
+  } else {
+    commitDeletion(fiber.child, domParent);
+  }
 }
 
 function workLoop(deadline) {
@@ -133,12 +148,11 @@ function workLoop(deadline) {
 requestIdleCallback(workLoop);
 
 function performUnitOfWork(fiber) {
-  if (!fiber.dom) {
-    fiber.dom = createDom(fiber);
+  if (fiber.type instanceof Function) {
+    updateFunctionComponent(fiber);
+  } else {
+    updateHostComponent(fiber);
   }
-
-  const elements = fiber.props.children;
-  reconcileChildren(fiber, elements);
 
   if (fiber.child) {
     return fiber.child;
@@ -153,6 +167,20 @@ function performUnitOfWork(fiber) {
 
     nextFiber = nextFiber.parent;
   }
+}
+
+function updateFunctionComponent(fiber) {
+  const children = [fiber.type(fiber.props)];
+  reconcileChildren(fiber, children);
+}
+
+function updateHostComponent(fiber) {
+  if (!fiber.dom) {
+    fiber.dom = createDom(fiber);
+  }
+
+  const elements = fiber.props.children;
+  reconcileChildren(fiber, elements);
 }
 
 function reconcileChildren(wipFiber, elements) {
@@ -213,29 +241,34 @@ const MiniReact = {
 };
 /** @jsx MiniReact.createElement */
 
-/*
 function App(props) {
-    return <h1>Hello, {props.name}</h1>
+  return MiniReact.createElement("h1", null, "Hello, ", props.name);
 }
-const element = <App name="world" />
+
+const element = MiniReact.createElement(App, {
+  name: "world"
+});
+const container = document.getElementById('app');
+MiniReact.render(element, container);
+/*
 const container = document.getElementById('app')
-MiniReact.render(element, container)
-const container = document.getElementById('app')
-*/
 
 const updateValue = e => {
-  rerender(e.target.value);
-};
+    rerender(e.target.value)
+}
 
 const rerender = value => {
-  const element = MiniReact.createElement("div", null, MiniReact.createElement("input", {
-    onInput: updateValue,
-    value: value
-  }), MiniReact.createElement("h2", null, "Hello, ", value));
-  MiniReact.render(element, container);
-};
+    const element = (
+        <div>
+            <input onInput={updateValue} value={value} />
+            <h2>Hello, {value}</h2>
+        </div>
+    )
+    MiniReact.render(element, container)
+}
+rerender('World')
+*/
 
-rerender('World');
 /*
 const container = document.getElementById('app')
 const element = (
